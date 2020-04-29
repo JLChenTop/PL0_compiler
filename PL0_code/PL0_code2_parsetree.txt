@@ -1,0 +1,14 @@
+					P
+					SP
+		V 		PRO 			SEN
+	var x  , squ  ;                   PRPHEAD 	SP ;                  		 FH
+		procedure square  ;                 SEN                  	 begin SEN ; 	SEN end
+					FH                   		ASS           LOOP
+				begin SEN end                  	 x  := BDS               while CDI do 		SEN
+				        ASS                  	    TERM                   BDS RELA BDS                        FH
+			     squ  := BDS                       FAC                   		TERM <=  TERM          begin SEN ; 	SEN ; 	SEN end
+				TERM                   1              		      FAC     FAC                              PROCALL         XIE             ASS
+			FAC MULD FAC                   			     x            10                    call square          write ( squ  )     x  := BDS
+			x      *	   x                							     	      TERM PS TERM
+													    FAC     +       FAC
+													     x                    1

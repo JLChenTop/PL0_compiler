@@ -1,0 +1,20 @@
+					P
+					SP
+	C 	V 	    			 PRO 									SEN
+    const CD ;    var arg  , ret  ;       PRPHEAD 	      SP ; 	             			 PRO 					 PROCALL
+max  = 100    		 procedure isprime  ;    V      SEN   		 PRPHEAD 			SP ;    			call primes
+					var i  ;    FH    		 procedure primes  ;    		SEN
+		    begin SEN ; 	   SEN ; 		   SEN end    					FH
+		      ASS   	 	 ASS   		 LOOP    					begin SEN ;	 SEN end
+		ret  := BDS           i  := BDS           while CDI do             SEN    	 		        ASS 	  	 LOOP
+		TERM                         TERM    BDS RELA BDS                  FH    			arg  := BDS         while CDI do SEN
+                                 FAC    		   FAC      TERM <  TERM    begin SEN ;   		SEN end               TERM    BDS RELA BDS    FH
+		1     		2              FAC     FAC         	COND         		 ASS                    FAC    TERM <TERM    begin SEN ; 	SEN ; 	SEN end
+					i      arg             if CDI then           SEN    		  i  := BDS    	2         FAC    FAC   	 PROCALL    	COND    	ASS
+						BDS RELA BDS    	   FH   		 TERM PS TERM    arg     max     call isprime     if CDI then SEN    arg  := BDS
+						TERM=TERM    begin SEN ; SEN end        FAC    +    FAC    			 BDS RELA BDS    XIE    	TERM PS TERM  
+			             FAC MULD FAC  MULD FAC    FAC   	 ASS    ASS  	  i 	    1    			 TERM=TERM    write ( arg  )    FAC    +    FAC
+			             arg     /        i          *        i         arg     ret  := BDS    i  := BDS   					  FAC     FAC   		 arg 	    1
+								TERM        TERM  					  ret      1
+								FAC           FAC
+								0                arg

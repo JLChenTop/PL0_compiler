@@ -1,0 +1,14 @@
+            				P
+				SP
+	C 		V 		PRO 			SEN
+const CD ; 	var d  , e  , f  ; 	PRPHEAD SP ; 			FH
+a  = 10  			procedure p  ; V 	SEN 		begin SEN ; 	SEN ; 		SEN ; 		SEN end
+				var g  ; 	FH 		          DU 	XIE 		PROCALL 		LOOP
+		begin ;   SEN ;       SEN ;        SEN    end 		read ( e  , f  ) write ( e  , f  , d  ) 	call p 		 while CDI do 	SEN
+			ASS 	ASS 	COND 							odd BDS 		ASS
+	d  := BDS 	e  := BDS 		if CDI then SEN 						TERM 		e  := BDS
+	TERM 		TERM 		BDS RELA BDS 	ASS 					FAC 		- TERM PS TERM
+FAC MULD FAC	 FAC MULD FAC 		TERM <= TERM	 f  := BDS 				d  		FAC + FAC
+a  * 2 		 a  / 3 			 FAC FAC 		TERM PS TERM 						e  	1
+					d       e 		 FAC + FAC
+							d 	 e

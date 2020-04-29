@@ -1,0 +1,21 @@
+P
+SP
+V PRO SEN
+var x  , y  , z  , q  , r  , n  , f  ;    PRPHEAD SP ; PRPHEAD    FH
+procedure multiply  ;    V SEN    PRPHEAD SP ; PRPHEAD    begin SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN end
+var a  , b  ;    FH    procedure divide  ;    V SEN    PRPHEAD SP ; PRPHEAD    DU    DU    PROCALL    XIE    DU    DU    PROCALL    XIE    XIE    DU    DU    PROCALL    XIE    DU    ASS    PROCALL    XIE
+begin SEN ; SEN ; SEN end    var w  ;    FH    procedure gcd  ;    V SEN    PRPHEAD SP ;    read ( x  )    read ( y  )    call multiply     write ( z  )    read ( x  )    read ( y  )    call divide     write ( q  )    write ( r  )    read ( x  )    read ( y  )    call gcd     write ( z  )    read ( n  )    f  := BDS    call fact     write ( f  )
+ASS    ASS    ASS    begin SEN ; SEN ; SEN ; SEN ; SEN end    var g  ;    FH    procedure fact  ;    SEN    TERM
+a  := BDS    b  := BDS    z  := BDS    ASS    ASS    ASS    LOOP    LOOP    begin SEN ; SEN ; SEN ; SEN end    FH    FAC
+TERM    TERM    TERM    r  := BDS    q  := BDS    w  := BDS    while CDI do SEN    while CDI do SEN    ASS    ASS    LOOP    ASS    begin SEN end    1
+FAC    FAC    FAC MULD FAC    TERM    TERM    TERM    BDS RELA BDS    ASS    BDS RELA BDS    FH    f  := BDS    g  := BDS    while CDI do SEN    z  := BDS    COND
+x     y     x     *    y     FAC    FAC    FAC    TERM    <=    TERM    w  := BDS    TERM    >    TERM    begin SEN ; SEN ; SEN end    TERM    TERM    BDS RELA BDS    FH    TERM    if CDI then SEN    
+x     0     y     FAC    FAC    TERM    FAC    FAC    ASS    ASS    COND    FAC    FAC    TERM    #    TERM    begin SEN ; SEN end    FAC    BDS RELA BDS    FH
+w     r     FAC MULD FAC    w     y     q  := BDS    w  := BDS    if CDI then SEN    x     y     FAC    FAC    COND    COND    f     TERM    >    TERM    begin SEN ; SEN ; SEN end
+2     *    w     TERM    TERM    BDS RELA BDS    FH    f     g     if CDI then SEN    if CDI then SEN    FAC    FAC    ASS    ASS    PROCALL
+FAC MULD FAC    FAC MULD FAC    TERM    <=    TERM    begin SEN ; SEN end    BDS RELA BDS    ASS    BDS RELA BDS    ASS    n     1     f  := BDS    n  := BDS    call fact
+2     *    q     w     /    2     FAC    FAC    ASS    ASS    TERM    <    TERM    g  := BDS    TERM    <    TERM    f  := BDS    TERM    TERM PS TERM
+w     r     r  := BDS    q  := BDS    FAC    FAC    TERM PS TERM    FAC    FAC    TERM PS TERM    FAC MULD FAC    FAC    -    FAC
+TERM PS TERM    TERM PS TERM    f     g     FAC    -    FAC    g     f     FAC    -    FAC    n     *    f     n     1
+FAC    -    FAC    FAC    +    FAC    g     f     f     g
+r     w     q     1

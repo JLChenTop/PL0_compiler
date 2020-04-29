@@ -1,0 +1,14 @@
+			P
+			SP
+	C 	V 	PRO 	    		SEN
+const CD ;       var b  , c  ;    PRPHEAD	 SP ;   		 FH
+a  = 10    		     procedure p  ;    SEN    	begin SEN ; 	SEN end
+				FH   	          DU    	LOOP
+			begin SEN end   	 read ( b  )    while CDI do 		SEN
+			      ASS    		BDS RELA BDS   		 FH
+			c  := BDS   	        TERM # TERM         begin SEN ; SEN ; 	    SEN ; SEN end
+			TERM PS TERM  	          FAC    FAC                    PROCALL    XIE   	     DU  （这个语句推空）
+			FAC    +    FAC   	              b     0      		call p     write ( BDS )    read ( b  )
+			b    	 a    					       TERM
+									FAC MULD FAC
+									     2     *    c
