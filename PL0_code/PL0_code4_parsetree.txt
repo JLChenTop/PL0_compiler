@@ -1,0 +1,19 @@
+P
+SP
+C V PRO SEN
+const CD ; var v1  , v2  , v3  , v4  ; PRPHEAD SP ; PRO FH
+c1  = 2  procedure p1  ; V SEN PRPHEAD SP ; begin SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN ; SEN end 
+var v5  ; FH procedure p2  ; C PRO SEN DU COND FH DU ASS PROCALL XIE
+begin SEN ; SEN ; SEN ; SEN end const CD ; PRPHEAD SP ; FH read ( v1  , v2  ) if CDI then SEN begin SEN ; SEN ; SEN ; SEN ; SEN end read ( v1  ) v2  := BDS call p2  write ( BDS )
+ASS XIE LOOP    c2  = 2  procedure p3  ; SEN begin SEN ; SEN ; SEN end BDS RELA BDS FH    ASS PROCALL XIE    TERM TERM
+v5  := BDS write ( BDS ) while CDI do SEN FH PROCALL COND COND TERM < TERM begin SEN ; SEN ; SEN ; SEN end v3  := BDS call p1  write ( BDS , BDS , BDS ) FAC FAC
+TERM TERM PS TERM PS TERM BDS RELA BDS FH begin SEN ; SEN end call p3  if CDI then SEN if CDI then SEN FAC FAC ASS ASS ASS    TERM TERM TERM TERM v1  v2
+FAC FAC MULD FAC + FAC - FAC TERM # TERM begin SEN ; SEN ; SEN ; SEN ; SEN end COND    odd BDS XIE BDS RELA BDS XIE v1  v2  v3  := BDS v1  := BDS v2  := BDS FAC FAC FAC MULD FAC FAC MULD FAC MULD FAC 
+2  v5  / 2  2  1  FAC FAC ASS ASS ASS ASS    if CDI then SEN TERM write ( BDS ) TERM = TERM write ( BDS ) TERM TERM TERM 1  c1  c1  * v1  c1  * v1  / 2
+v3  0  v4  := BDS v3  := BDS v1  := BDS v2  := BDS BDS RELA BDS FH FAC TERM FAC FAC TERM PS TERM FAC FAC FAC
+TERM TERM PS TERM TERM TERM TERM # TERM begin SEN ; SEN ; SEN ; SEN end c2  FAC c2  2  FAC + FAC v1  v2  v3
+FAC MULD FAC FAC - FAC MULD FAC FAC FAC FAC FAC ASS ASS PROCALL    c2  c2  1
+v1  / v2  v1  v4  * v2  v2  v3  v1  1  v1  := BDS v2  := BDS call p3
+TERM PS TERM TERM
+FAC - FAC FAC MULD FAC
+v1  1  v2  * v1
