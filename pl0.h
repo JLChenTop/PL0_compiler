@@ -253,10 +253,11 @@ semantics_list *mergelist(semantics_list *a,semantics_list *b){
 	return a;
 }
 
-
+int nodeseqnum=0; 
 //创建语法树的存储结构
 class ptree{//语法树节点结构体 
 public:
+	int nodeseq;//节点的唯一标识 
 	string name;//非终结符 
 	seq* wnode;//单词符号指针  （叶子节点才是单词） 
 	int level;//节点所在层次 
@@ -278,17 +279,20 @@ public:
 		name=""; 
 		wnode=NULL;
 		father=firstchild=nextchild=NULL;
+		nodeseq=nodeseqnum++;
 	} 
 	ptree(ptree* FATHER,string NAME){//创建一个非终结符节点 
 		name=NAME;
 		father=FATHER;
 		wnode=NULL;
 		firstchild=nextchild=NULL;
+		nodeseq=nodeseqnum++;
 	}
 	ptree(seq* n1,ptree* n2){//创建一个终结符节点 
 		wnode=n1;
 		father=n2;
 		firstchild=nextchild=NULL;
+		nodeseq=nodeseqnum++;
 	}
 }
 *root,*curnode,//当进入子程序时，保证curnode为当前子程序的节点 
@@ -296,10 +300,11 @@ public:
 *fnode; 			//node表示从子程序出去,仍指向这个节点 
 //定义一个链表，链接所有的叶子
 
-
+//输出四元式 
 void showass(){
 	cout.setf(std::ios::left);
 	cout<<"中间代码四元式：\n";
+	cout<<"/*操作数1、2的'-'表示无此操作数\n   操作数3的'-'表示临时地址空间，后面为其节点编号*/\n"; 
 	cout<<"四元式变换	  操作码	操作数 1 	 2 	   3 \n";	
 	
 	for(int i=0;i<maxqnum;i++){
@@ -307,10 +312,23 @@ void showass(){
 			cout.width(18),cout<<i;
 			cout.width(5),cout<<opcode[assembly[i]->op];
 			cout.width(16),cout<<assembly[i]->op;
-			if(assembly[i]->r1)	cout.width(10),cout<<assembly[i]->r1->value ; 
-			else cout.width(10),cout<<"-";
-			if(assembly[i]->r2)	cout.width(10),cout<<assembly[i]->r2->value ; 
-			else cout.width(10),cout<<"-";
+			if(assembly[i]->r1)	{
+				//判断操作数节点，！！--实际上--！！是否是叶子   //这里不可以，因为叶子都规约上去变成非叶子了 
+				cout.width(10); 
+				if(assembly[i]->r1->wnode){//叶子节点 
+					cout<<assembly[i]->r1->wnode->v; 
+				}else{ //非叶子  ，临时地址空间 
+					cout<<assembly[i]->r1->nodeseq;//value ; 
+				} 
+			} else cout.width(10),cout<<"-";//没有该操作数 
+			if(assembly[i]->r2){////判断操作数节点是否是叶子 同上	
+				cout.width(10); 
+				if(assembly[i]->r2->wnode){//叶子节点 
+					cout<<assembly[i]->r2->wnode->v; 
+				}else{ //非叶子  ，临时地址空间 
+					cout<<assembly[i]->r2->nodeseq;//value ; 
+				} 
+			}else cout.width(10),cout<<"-";//没有该操作数 
 			//
 			if(assembly[i]->op<jnum){	//说明这是一个跳转指令，则目的操作数为一个数字，即n3 
 				cout.width(10);
@@ -319,14 +337,18 @@ void showass(){
 			//目的操作时，要么是一个临时地址空间，要么是一个变量 
 			//	if(assembly[i]->r3)	cout.width(10),cout<<assembly[i]->r3->value ; 
 			//	else 
-				if(opcode[assembly[i]->op]==":=")	//赋值语句，操作数是一个变量
+				if(opcode[assembly[i]->op]==":=")	//赋值语句，操作数是一个变量,节点是一个叶子节点 
 					cout.width(10),cout<<assembly[i]->r3->wnode->v; 
-				else cout.width(10),cout<<"-";
+				else {//其他语句， 目的操作数应该是一个临时地址空间， 
+					cout.width(10),cout<<"-";
+					cout<<assembly[i]->r3->nodeseq;
+				} 
 			}
 			cout<<endl;
 		}else break;
 	}
 }
+
 //string数据转换为int型
 int strtoi(string x){
 	if(x=="")	return -1;
