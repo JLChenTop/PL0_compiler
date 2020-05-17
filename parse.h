@@ -4,6 +4,8 @@
 
 输入，词法分析产生的单词序列
 head  
+
+语义分析 
 */ 
 #include "pl0.h"
 
@@ -11,48 +13,21 @@ head
 seq* cur;
 int lev;//全局变量，标明当前数据的level 
 stack<symtab*> tabptr;//存放table的层次 
+//tabptr.top()  指向当前所在的table表 
 stack<int> offset;//记录一个过程中变量的相对地址初值定为3，（见指导书 
-//创建语法树的存储结构
-struct ptree{//语法树节点结构体 
-	string name;//非终结符 
-	seq* node;//单词符号指针  （叶子节点才是单词） 
-	int level;//节点所在层次 
-	ptree* father;
-	ptree* firstchild; 
-	ptree* nextchild;
-	
-	ptree(){
-		name=""; 
-		node=NULL;
-		father=firstchild=nextchild=NULL;
-	} 
-	ptree(ptree* FATHER,string NAME){//创建一个非终结符节点 
-		name=NAME;
-		father=FATHER;
-		node=NULL;
-		firstchild=nextchild=NULL;
-	}
-	ptree(seq* n1,ptree* n2){//创建一个终结符节点 
-		node=n1;
-		father=n2;
-		firstchild=nextchild=NULL;
-	}
-}
-*root,*curnode,//当进入子程序时，保证curnode为当前子程序的节点 
-*leaf,*curleaf; 
-//定义一个链表，链接所有的叶子
+
 
 void printnode(ptree*nd){ //打印语法树的一个节点 
-	if(nd->name=="" && nd->node==NULL)	cout<<"   ";//一个子树 
+	if(nd->name=="" && nd->wnode==NULL)	cout<<"   ";//一个子树 
 	else if(nd->firstchild){
 		cout<<nd->name<<" ";
 	}else {//为终结符 
-		if(nd->node->k ==identifier||nd->node->k ==constant){
-			if(nd->node->k==constant &&strtoi(nd->node->v)!=-1)	
-				cout<<num[strtoi(nd->node->v)] <<"  ";
-			else cout<<nd->node->v <<"  ";	
+		if(nd->wnode->k ==identifier||nd->wnode->k ==constant){
+			if(nd->wnode->k==constant &&strtoi(nd->wnode->v)!=-1)	
+				cout<<num[strtoi(nd->wnode->v)] <<"  ";
+			else cout<<nd->wnode->v <<"  ";	
 		}else  
-			cout<<kw[nd->node->k]<<" ";
+			cout<<kw[nd->wnode->k]<<" ";
 	}
 }
  
@@ -63,11 +38,11 @@ void postorder(ptree *root){
 		cur=root->firstchild;
 		//遍历孩子 
 		if(!cur){//无孩子，是叶子 
-			if(root->node->k ==(identifier|constant)){
-				if(root->node->k==constant &&strtoi(root->node->v)!=-1)	
-					cout<<num[strtoi(root->node->v)] <<" >\n";
-				else cout<<root->node->v <<" >\n";	
-			}else  cout<<kw[root->node->k]<<" ";
+			if(root->wnode->k ==(identifier|constant)){
+				if(root->wnode->k==constant &&strtoi(root->wnode->v)!=-1)	
+					cout<<num[strtoi(root->wnode->v)] <<" >\n";
+				else cout<<root->wnode->v <<" >\n";	
+			}else  cout<<kw[root->wnode->k]<<" ";
 		}else{	
 			//有孩子，表明规约成一个非终结符 
 			while(cur){
@@ -97,7 +72,8 @@ void levelorder(ptree*root){
 					t=t->nextchild;
 					q.push(t);
 				}
-//这里表示把一个非终结符的所有孩子入队 应该空一大格子	t=new ptree;q.push(t); 
+//这里表示把一个非终结符的所有孩子入队 应该空一大格子
+//	t=new ptree;q.push(t); 
 			}
 		}
 		cout<<endl;
@@ -105,30 +81,6 @@ void levelorder(ptree*root){
 	}
 }
 
-//输出table表
-void showtab(symtab* com){
-	symtab* now=com;
-	tableitem* it=now->item;
-	if(com==table)
-		cout<<"name:	  kind:		    level:	value:	 ADR:\n";
-	cout.setf(std::ios::left);
-	symtab* x=now->next;
-	while(it){
-		cout.width(10);cout<<it->name ;
-		cout.width(20);cout<<kw[it->k];
-		cout.width(10);cout<<it->level ;
-		if(it->val==-1)	cout.width(10),cout<<" 	 ";
-			else cout.width(10),cout<<it->val ; 
-		if(it->ADR==-1)	 cout<<"\n";
-			else cout.width(10),cout<<it->ADR<<"\n"; 
-		if(kw[it->k]=="procedure"){
-			showtab(x);
-			x=x->next;
-		}
-		it=it->next;
-	}
-	
-} 
 
 //声明所有子程序
 void P(); //主程序 
@@ -168,11 +120,25 @@ void parserror(){
 	exit(0);
 }
 
-void link2father(ptree*node ){//链接父亲节点node指向孩子curnode 
-	if(!node->firstchild){//当前节点还没有孩子 
-		node->firstchild=curnode; 
+//语义分析error 
+void semanticserror(){
+	cout<<"semantics error!!!\n";
+	cout<<"< ";
+		cout.width(3);  cout<<cur->sn<<",	";
+		cout.width(10);  cout<<kw[cur->k]<<"	,	";
+		cout.width(5);  cout<<cur->k<<"	,	";
+		cout.width(5);  
+	if(cur->k==constant &&strtoi(cur->v)!=-1)	
+		cout<<num[strtoi(cur->v)] <<" >\n";
+	else cout<<cur->v <<" >\n";
+	exit(0);	
+}
+
+void link2father(ptree *fathernode ){//链接父亲节点node指向孩子（默认）curnode 
+	if(!fathernode->firstchild){//当前节点还没有孩子 
+		fathernode->firstchild=curnode; 
 	}else{
-		ptree *lastnode=node->firstchild;
+		ptree *lastnode=fathernode->firstchild;
 		while(lastnode->nextchild)	lastnode=lastnode->nextchild;
 		lastnode->nextchild=curnode;
 	}
@@ -181,9 +147,10 @@ void link2father(ptree*node ){//链接父亲节点node指向孩子curnode
 void P(){//主程序 
 	root=new ptree(NULL,"P");//创建语法树的根
 	
-	table=new symtab("main");//创建主table表 
-	tabptr.push(table); 
+	table=new symtab("main",lev);//创建主table表 
+	tabptr.push(table); //存放table的层次 
 	offset.push(3); 
+	
 	cur=head; 				//单词序列迭代器初始化 
 	
 	curnode=new ptree(root,"SP");
@@ -216,8 +183,9 @@ void SP(){//分程序
 	link2father(node);
 	SEN(); 
 	//规约 
+	
+	fnode=node;
 }
-
 
 void C(){//常量说明部分 
 	ptree *node=curnode;	//node为调用当前这个子程序时产生的节点 
@@ -242,8 +210,12 @@ void C(){//常量说明部分
 			cur=cur->next;
 		} 
 		else parserror();
-	}else parserror();		
+	}else parserror();
+	//规约 
+	
+	fnode=node;		
 } 
+
 void CD(){//常量定义 
 	ptree *node=curnode;	//node为调用当前这个子程序时产生的节点 
 	if(kw[cur->k]=="identifier"){
@@ -264,6 +236,9 @@ void CD(){//常量定义
 			}else parserror();
 		}else parserror();
 	}else parserror(); 
+	//规约 
+	
+	fnode=node;
 } 
 
 void V(){//变量说明部分 ,关于变量层次说明，放在语义分析时再对程序进行修改 
@@ -302,10 +277,12 @@ void V(){//变量说明部分 ,关于变量层次说明，放在语义分析时再对程序进行修改
 			else parserror();
 		}else parserror();
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
 void PRO(){//过程说明部分 
-
 	ptree *node=curnode;	//node为调用当前这个子程序时产生的节点 
 	curnode=new ptree(node,"PRPHEAD");//创建一个非终结符节点,
 	link2father(node);
@@ -328,6 +305,9 @@ void PRO(){//过程说明部分
 			link2father(node);
 			PRO();
 	} 
+	//规约 
+	
+	fnode=node;
 } 
 
 void PRPHEAD(){//过程首部 
@@ -346,7 +326,7 @@ void PRPHEAD(){//过程首部
 		//	offset.top()+=4;//4表示当前变量的字节宽度 
 	
 	//then进入下一个过程，新建一个表 
-			symtab* newtab=new symtab(cur->v,tabptr.top());
+			symtab* newtab=new symtab(cur->v,lev+1,tabptr.top());
 	//并在上层表中建立指针指向该表；
 			tabptr.top()->ptrnext(newtab);
 	//进栈 
@@ -363,7 +343,9 @@ void PRPHEAD(){//过程首部
 			}else parserror();
 		}else parserror();	
 	}else parserror();
+	//规约 
 	
+	fnode=node;	
 } 
 
 void SEN(){//语句 
@@ -397,18 +379,27 @@ void SEN(){//语句
 		link2father(node);
 		XIE();
 	}else {//这里表明这个语句推空 
-		cout<<"kong..."<<kw[cur->k]<<"...."<<endl;
+		cout<<"语句推空"<<cur->sn<<" "<<kw[cur->k]<<"...."<<endl;
 		curnode=new ptree;//创建一个空节点,
 		link2father(node);
 	}
+	//规约 
+	node->nextlist=NULL; 
+	
+	fnode=node;
 } 
 
 void ASS(){//赋值语句 
 	ptree *node=curnode;	//node为调用当前这个子程序时产生的节点 
 	if(kw[cur->k]=="identifier"){
+//翻译赋值语句：
+		//首先查找标识符是否存在 到table表中查找 
+		tableitem* id= findintab(tabptr.top(),cur->v);
+		if(id==NULL)	semanticserror(); 
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
 		cur=cur->next;
+		ptree *idnode=curnode;//指向叶子节点 
 		if(kw[cur->k]==":="){
 			curnode=new ptree(cur,node);//创建一个叶子节点,
 			link2father(node);
@@ -416,8 +407,16 @@ void ASS(){//赋值语句
 			curnode=new ptree(node,"BDS");//创建一个非终结符节点,
 			link2father(node);
 			BDS();
+		//调用了BDS，然后我们这个节点，是fnode,表达式的值存在其中 
+		
+		//给出一条中间代码
+			assembly[nextquad++]=
+			new quat(optab[":="],fnode,NULL,idnode);	
 		}else parserror();
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
 void FH(){//复合语句 
@@ -443,32 +442,61 @@ void FH(){//复合语句
 			cur=cur->next;
 		}else parserror();
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
-void CDI(){//条件 
+void CDI(){//条件   这里的布尔表达式，逻辑简单只有一个逻辑判断 
 	ptree *node=curnode;	//node为调用当前这个子程序时产生的节点 
-	if(kw[cur->k]=="odd"){
+	if(kw[cur->k]=="odd"){//表示bds值
+	//odd bds，即单表达式，非0为真，否则即为0，为假 
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
 		cur=cur->next;
 		curnode=new ptree(node,"BDS");//创建一个非终结符节点,
 		link2father(node);
 		BDS();
+//翻译
+		node->truelist=mkslist(nextquad);
+		node->falselist=mkslist(nextquad+1);
+	//给出中间代码    //这里要跳往何处暂时不知道，
+		assembly[nextquad++]=new quat(optab["jnz"],fnode,NULL,-1);
+		assembly[nextquad++]=new quat(optab["j"],NULL,NULL,-1);		
 	}else {
 		curnode=new ptree(node,"BDS");//创建一个非终结符节点,
 		link2father(node);
 		BDS();	
+		ptree *s1=fnode; 
 		curnode=new ptree(node,"RELA");//创建一个非终结符节点,
 		link2father(node);
 		RELA();
+		ptree *relopnode=fnode; 
+		//新加一个空节点  这里不需要，当多个逻辑判断组合时使用 
+	//	curnode=new ptree;//创建一个空节点,
+	//	link2father(node);
+	//	curnode->quad=nextquad;
+		 
 		curnode=new ptree(node,"BDS");//创建一个非终结符节点,
 		link2father(node);
 		BDS();
+		ptree *s2=fnode; 
+//翻译
+		node->truelist=mkslist(nextquad);
+		node->falselist=mkslist(nextquad+1);
+	//给出中间代码    //这里要跳往何处暂时不知道，
+		string jump="j"+kw[relopnode->firstchild->wnode->k];
+		assembly[nextquad++]=new quat(optab[jump],s1,s2,-1);
+		assembly[nextquad++]=new quat(optab["j"],NULL,NULL,-1);	
 	}
+	//规约 
+	
+	fnode=node;
 } 
 
 void BDS(){//表达式 
 	ptree *node=curnode;	//node为调用当前这个子程序时产生的节点 
+	bool neg=false; //cout<<"test !!!\n";
 	if(kw[cur->k]=="+"){
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
@@ -477,18 +505,34 @@ void BDS(){//表达式
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
 		cur=cur->next;
+		//说明下一项是一个负项即需要乘以-1
+		neg=true; 
 	}	
 	curnode=new ptree(node,"TERM");//创建一个非终结符节点,
 	link2father(node);
-	TERM();
+	TERM();//fnode
+	if(neg){//负项  对fnode取负给node 
+		fnode->value=fnode->value*(-1); 
+		assembly[nextquad++]=
+		new quat(optab["minus"],fnode,NULL,node);
+	} else{
+		node->value=fnode->value;//当前节点的值	
+	}
 	while(kw[cur->k]=="+"| kw[cur->k]=="-"){
 		curnode=new ptree(node,"PS");//创建一个非终结符节点,
 		link2father(node);
 		PS();
+		ptree *psnode=fnode;//加减符号节点 
 		curnode=new ptree(node,"TERM");//创建一个非终结符节点,
 		link2father(node);
 		TERM();
+	//	cout<<psnode->firstchild->wnode->sn<<"..";
+	//	cout<<"test+-  :"<<kw[psnode->firstchild->wnode->k]<<" \n";
+		assembly[nextquad++]=
+		new quat(optab[kw[psnode->firstchild->wnode->k]],node,fnode,node);
 	}
+	//规约 
+	fnode=node;
 } 
 
 void TERM(){//项 
@@ -496,14 +540,21 @@ void TERM(){//项
 	curnode=new ptree(node,"FAC");//创建一个非终结符节点,
 	link2father(node);
 	FAC();
+	node->value=fnode->value;//当前节点的值	
 	while(kw[cur->k]=="*"| kw[cur->k]=="/"){
 		curnode=new ptree(node,"MULD");//创建一个非终结符节点,
 		link2father(node);
 		MULD();
+		ptree *muldnode=fnode;//乘除符号节点 
 		curnode=new ptree(node,"FAC");//创建一个非终结符节点,
 		link2father(node);
 		FAC(); 
+		assembly[nextquad++]=
+		new quat(optab[kw[muldnode->firstchild->wnode->k]],node,fnode,node);
 	} 
+	//规约 
+	
+	fnode=node;
 } 
 
 void FAC(){//因子 
@@ -511,15 +562,23 @@ void FAC(){//因子
 	if(kw[cur->k]=="identifier"){
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
+		//去table中取数据的值 
+//首先查找标识符是否存在 到table表中查找 
+		tableitem* id= findintab(tabptr.top(),cur->v);
+		if(id==NULL)	semanticserror(); 
+		node->value=id->val; 
 		cur=cur->next;
 	}else if(kw[cur->k]=="constant"){
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
+//首先查找标识符是否存在 到table表中查找 
+		node->value=num[strtoi(cur->v)]; 
 		cur=cur->next;
 	}else if(kw[cur->k]=="("){
 		curnode=new ptree(node,"BDS");//创建一个非终结符节点,
 		link2father(node);
 		BDS();
+		node->value=fnode->value;//当前节点值=bds的值 
 		if(kw[cur->k]==")"){
 			curnode=new ptree(cur,node);//创建一个叶子节点,
 			link2father(node);
@@ -527,6 +586,9 @@ void FAC(){//因子
 		}
 		else parserror();
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
 void COND(){//条件语句 
@@ -538,15 +600,29 @@ void COND(){//条件语句
 		curnode=new ptree(node,"CDI");//创建一个非终结符节点,
 		link2father(node);
 		CDI();
+		ptree *cdinode=fnode;
 		if(kw[cur->k]=="then"){
 			curnode=new ptree(cur,node);//创建一个叶子节点,
 			link2father(node);
 			cur=cur->next;
+			//新加一个空节点  M
+			curnode=new ptree;//创建一个空节点,
+			link2father(node);
+			curnode->quad=nextquad;
+			ptree *mnode=curnode;
+			
 			curnode=new ptree(node,"SEN");//创建一个非终结符节点,
 			link2father(node);
 			SEN();
+	//翻译
+			backpatch(cdinode->truelist,mnode->quad);
+			node->nextlist=mergelist(cdinode->falselist,fnode->nextlist);		
 		}else parserror();
+		
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
 void PROCALL(){//过程调用语句 
@@ -562,6 +638,9 @@ void PROCALL(){//过程调用语句
 		}
 		else parserror();
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
 void LOOP(){//当型循环语句 
@@ -570,18 +649,40 @@ void LOOP(){//当型循环语句
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
 		cur=cur->next;
+		
+		curnode=new ptree;//创建一个空节点,m1
+		link2father(node);
+		curnode->quad=nextquad;
+		ptree *m1node=curnode;
+		
 		curnode=new ptree(node,"CDI");//创建一个非终结符节点,
 		link2father(node);
 		CDI();
+		ptree *cdinode=fnode;
 		if(kw[cur->k]=="do"){
 			curnode=new ptree(cur,node);//创建一个叶子节点,
 			link2father(node);
 			cur=cur->next;
+			
+			curnode=new ptree;//创建一个空节点,m2
+			link2father(node);
+			curnode->quad=nextquad;
+			ptree *m2node=curnode;
+			
 			curnode=new ptree(node,"SEN");//创建一个非终结符节点,
 			link2father(node);
 			SEN();
+	//翻译
+			backpatch(fnode->nextlist,m1node->quad);
+			backpatch(cdinode->truelist,m2node->quad);
+			node->nextlist=cdinode->falselist;
+			//给出一条中间代码 
+			assembly[nextquad++]=new quat(optab["j"],NULL,NULL,m1node->quad);			
 		}else parserror();
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
 void DU(){//读语句 
@@ -616,6 +717,9 @@ void DU(){//读语句
 			}else parserror();
 		}else parserror();
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 void XIE(){//写语句 
 	ptree *node=curnode;	//node为调用当前这个子程序时产生的节点 
@@ -645,6 +749,9 @@ void XIE(){//写语句
 			}else parserror();
 		}else parserror();
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
 void PS(){//加减运算符 
@@ -658,6 +765,9 @@ void PS(){//加减运算符
 		link2father(node);
 		cur=cur->next;
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 void MULD(){//乘除运算符 
 	ptree *node=curnode;	//node为调用当前这个子程序时产生的节点 
@@ -670,6 +780,9 @@ void MULD(){//乘除运算符
 		link2father(node);
 		cur=cur->next;
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
 void RELA(){//关系运算符 
@@ -699,6 +812,9 @@ void RELA(){//关系运算符
 		link2father(node);
 		cur=cur->next;
 	}else parserror();
+	//规约 
+	
+	fnode=node;
 } 
 
 
