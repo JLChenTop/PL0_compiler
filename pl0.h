@@ -1,3 +1,8 @@
+/* 
+基本量的定义 
+
+词法分析 
+*/ 
 #include<iostream>
 #include<string> 
 #include<string.h>
@@ -36,11 +41,10 @@ string
 ll len;
 int i,vnum,//标识符数目
 	level; //当前程序所处的层次 
-//保留字表 
-map<string,int> reserve; 
+//保留字表  和操作码表optab 
+map<string,int> reserve,optab; 
 map<int,string> kw;//单词种别及其对应的单词 符号 
-
-
+//cout<<"******test  \n";
 //源程序经词法分析后产生的单词序列 
 struct seq{
 	int k;//单词种别
@@ -53,6 +57,9 @@ int snn;
 //建立常量值表num ,及下一个可以放置常量的地址 
 int num[maxnum],ci;
 
+void semanticserror();
+void parserror();
+class ptree;
 //要创建一个table表，存储源程序中出现的标识符
 // 包括，常量名，变量名，过程名
 //table的格式，name; kind; val(常量);level;ADR(变量);
@@ -72,19 +79,24 @@ struct tableitem{//table表项
 		name=NAME;k=kind;level=l;val=value;ADR=address;
 	}
 }; 
+
+//产生table表项函数 
 tableitem* mkitem(string NAME,int kind,int l,int value=-1,int address=-1){
 	tableitem* the=new tableitem(NAME,kind,l,value,address);
 	return the;
 }
-class symtab{ //table表 
+//table表 
+class symtab{ 
 public:
 	string name; // 表名 ，
 	tableitem* item; //表项链表 
+	int level;//每一个table表的层次 
 	symtab* upfloor;//上层表 
 	symtab* next;//其下层表可能有若干并列，链表存储
 	  
-	symtab(string NAME,symtab *FATHER=NULL){
+	symtab(string NAME,int l,symtab *FATHER=NULL){
 		name=NAME;
+		level=l;
 		upfloor=FATHER;
 		item=NULL;
 		next=NULL;
@@ -97,6 +109,7 @@ public:
 			iter->next=cur;
 		}
 	}
+	//添加表项 
 	additem(tableitem* next){
 		if(!item)	item=next;
 		else{
@@ -105,9 +118,215 @@ public:
 			cur->next=next;
 		}
 	}
-}*table; 
+}
+*table; 
+
+//从当前table表即tabptr.top() 中，按名查找某一项 并返回 
+//从当前table表或其上层表中查找 
+tableitem* findintab(symtab* com,string xname){
+	symtab* now=com;
+	tableitem* it=now->item;
+	symtab* x=now->upfloor;
+	while(it){/*
+		cout.width(10);cout<<it->name ;
+		cout.width(20);cout<<kw[it->k];
+		cout.width(10);cout<<it->level ;
+		if(it->val==-1)	cout.width(10),cout<<" 	 ";
+			else cout.width(10),cout<<it->val ; 
+		if(it->ADR==-1)	 cout<<"\n";
+			else cout.width(10),cout<<it->ADR<<"\n"; 
+			*/
+		if(it->name==xname)		return it;
+		it=it->next;
+	}	
+	//当前表查找完毕，若没有找到，去其上层表中查找
+	if(x!=NULL) {
+		tableitem* itt=findintab(x,xname);
+		return itt;
+	}	
+//table中查无此项 
+	return NULL;
+} 
+//输出table表
+void showtab(symtab* com){
+	symtab* now=com;
+	tableitem* it=now->item;
+	if(com==table)
+		cout<<"name:	  kind:		    level:	value:	 ADR:\n";
+	cout.setf(std::ios::left);
+	symtab* x=now->next;
+	while(it){
+		cout.width(10);cout<<it->name ;
+		cout.width(20);cout<<kw[it->k];
+		cout.width(10);cout<<it->level ;
+		if(it->val==-1)	cout.width(10),cout<<" 	 ";
+			else cout.width(10),cout<<it->val ; 
+		if(it->ADR==-1)	 cout<<"\n";
+			else cout.width(10),cout<<it->ADR<<"\n"; 
+		if(kw[it->k]=="procedure"){
+			cout<<"访问子表\n"; 
+			showtab(x);
+			x=x->next;
+		}
+		it=it->next;
+	}
+} 
+
+//操作码
+#define jnum 9
+string opcode[]{//"_",	  
+	"j","j<","j<=","j>","j>=",//5
+	"j=","j#","jz","jnz",//4 当操作码小于 9 时表明是跳转语句 
+	"+","-","*","/",//4
+	":=","minus"//2  
+//	"","","",
+//	"","","",
+}; int opnum=15;
+
+const int maxqnum=1000;
+//四元式 存储结构
+class quat{
+public:
+	int op;//操作码
+	ptree *r1,*r2,*r3;
+	int n3; 
+	quat(int option,ptree* x1=NULL,ptree* x2=NULL,ptree* x3=NULL){
+		op=option;
+		r1=x1;r2=x2;r3=x3;
+		n3=-1;
+	}
+	quat(int option,ptree* x1=NULL,ptree* x2=NULL,int q=-1){
+		op=option;
+		r1=x1;r2=x2;
+		n3=q;
+		r3=NULL;
+	}
+	//两个操作数 是一个标识符或者数字 
+/*	string r1,r2;
+	bool isnum1,isnum2;//操作数是一个数 还是变量或者常量 
+	string r3;//目的地址，一个数；目的操作数，一个变量名 ,临时地址空间 
+	bool isnum3;          //默认都是变量名 
+	quat(int option,string s1="",string s2="",string s3="",
+			bool a=false,bool b=false,bool c=false){
+		op=option;
+		r1=s1;r2=s2;r3=s3;
+		isnum1=a;
+		isnum2=b;
+		isnum3=c;
+	}*/
+
+}
+*assembly[maxqnum];
+int nextquad=0; 
 
 
+struct  semantics_list{
+	int seqnum;
+	semantics_list* next;
+	semantics_list(int x,semantics_list* y=NULL)
+	{seqnum=x;next=y;}
+};
+
+semantics_list *mkslist(int x){
+	semantics_list *the=new semantics_list(x);
+	return the;
+} 
+
+void backpatch(semantics_list *x,int thequad ){
+	while(x){
+		if(assembly[x->seqnum]->op <jnum){
+			assembly[x->seqnum]->n3=thequad;
+			x=x->next;
+		}
+		else semanticserror();
+	}
+}
+
+semantics_list *mergelist(semantics_list *a,semantics_list *b){
+	if(!a && !b)	return NULL;
+	if(!a)	return b;
+	if(!b)	return a;
+	semantics_list *last;
+	last=a;
+	while(last->next)	last=last->next;
+	if(b)	last->next=b;
+	return a;
+}
+
+
+//创建语法树的存储结构
+class ptree{//语法树节点结构体 
+public:
+	string name;//非终结符 
+	seq* wnode;//单词符号指针  （叶子节点才是单词） 
+	int level;//节点所在层次 
+	ptree* father;
+	ptree* firstchild; 
+	ptree* nextchild;
+	//用于语义分析的节点数据,
+//每一个节点是一个非终结符或者终结符，有些具有数值属性
+	int value; 
+	int begin,next;
+	int totrue,tofalse; 
+	void* code; 
+	int quad; 
+	semantics_list *truelist,
+	*falselist,
+	*nextlist;//链中，为当前节点结束之后去往的下一个位置 
+	
+	ptree(){
+		name=""; 
+		wnode=NULL;
+		father=firstchild=nextchild=NULL;
+	} 
+	ptree(ptree* FATHER,string NAME){//创建一个非终结符节点 
+		name=NAME;
+		father=FATHER;
+		wnode=NULL;
+		firstchild=nextchild=NULL;
+	}
+	ptree(seq* n1,ptree* n2){//创建一个终结符节点 
+		wnode=n1;
+		father=n2;
+		firstchild=nextchild=NULL;
+	}
+}
+*root,*curnode,//当进入子程序时，保证curnode为当前子程序的节点 
+*leaf,*curleaf,
+*fnode; 			//node表示从子程序出去,仍指向这个节点 
+//定义一个链表，链接所有的叶子
+
+
+void showass(){
+	cout.setf(std::ios::left);
+	cout<<"中间代码四元式：\n";
+	cout<<"四元式变换	  操作码	操作数 1 	 2 	   3 \n";	
+	
+	for(int i=0;i<maxqnum;i++){
+		if(assembly[i]){
+			cout.width(18),cout<<i;
+			cout.width(5),cout<<opcode[assembly[i]->op];
+			cout.width(16),cout<<assembly[i]->op;
+			if(assembly[i]->r1)	cout.width(10),cout<<assembly[i]->r1->value ; 
+			else cout.width(10),cout<<"-";
+			if(assembly[i]->r2)	cout.width(10),cout<<assembly[i]->r2->value ; 
+			else cout.width(10),cout<<"-";
+			//
+			if(assembly[i]->op<jnum){	//说明这是一个跳转指令，则目的操作数为一个数字，即n3 
+				cout.width(10);
+				if(assembly[i]->n3==-1)	cout<<"-";	 else cout<<assembly[i]->n3;
+			}else {//非跳转指令   目的操作数应该是一个待操作的数 
+			//目的操作时，要么是一个临时地址空间，要么是一个变量 
+			//	if(assembly[i]->r3)	cout.width(10),cout<<assembly[i]->r3->value ; 
+			//	else 
+				if(opcode[assembly[i]->op]==":=")	//赋值语句，操作数是一个变量
+					cout.width(10),cout<<assembly[i]->r3->wnode->v; 
+				else cout.width(10),cout<<"-";
+			}
+			cout<<endl;
+		}else break;
+	}
+}
 //string数据转换为int型
 int strtoi(string x){
 	if(x=="")	return -1;
@@ -117,7 +336,8 @@ int strtoi(string x){
 	return s;
 } 
 
-// 创建保留字表reserve(该表同样兼具单词编码表)，还有编码对应单词表kw 
+// 创建保留字表reserve(该表同样兼具单词编码表)，
+//还有编码对应单词表kw 
 void create_keytable(){
 //保留字表  ,也是保留字的单词编码表，
 //           单词编码还有另外的两类单词，标识符和常量，
@@ -132,6 +352,10 @@ void create_keytable(){
 		kw[i]=keyword[i-1];	
 	kw[identifier]="identifier";
 	kw[constant]="constant";
+//操作码表
+	for(int i=1;i<opnum;i++) {
+		optab[opcode[i]]=i;
+	}
 }
 
 //读取PL0语言源程序 
@@ -178,12 +402,18 @@ void werror(int i=0,string s=""){
 	exit(0);
 } 
 
-//输出显示单词类别表 
+//输出显示单词类别表 和操作码表 
 void show_word_coding_table(){
+	cout<<"    单词	类别码\n";
 	for(int i=0;i<kwsize;i++)
-		cout<<keyword[i]<<" "<< reserve[keyword[i]]<<endl;
-	cout<<"identifier "<<identifier<<endl;
-	cout<<"constant "<<constant<<endl;
+		cout<<setw(10)<<keyword[i]<<"	 "<< reserve[keyword[i]]<<endl;
+	cout<<"  identifier  	 "<<identifier<<endl;
+	cout<<"  constant 	 "<<constant<<endl;
+	//操作码表
+	cout<<" 操作		操作码\n";
+	for(int i=1;i<=opnum;i++) {
+		cout<<setw(3)<<opcode[i]<<"		"<<i<<endl;
+	}
 }
 
 //屏幕输出单词序列 
