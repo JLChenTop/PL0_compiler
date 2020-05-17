@@ -146,7 +146,6 @@ void link2father(ptree *fathernode ){//链接父亲节点node指向孩子（默认）curnode
 
 void P(){//主程序 
 	root=new ptree(NULL,"P");//创建语法树的根
-	
 	table=new symtab("main",lev);//创建主table表 
 	tabptr.push(table); //存放table的层次 
 	offset.push(3); 
@@ -164,6 +163,7 @@ void P(){//主程序
 }
 void SP(){//分程序 
 	ptree *node=curnode;	//node为调用当前这个子程序时产生的节点 
+
 	if(kw[cur->k] =="const"){//存在常量说明部分  
 		curnode=new ptree(node,"C");//curnode为node的孩子 
 		link2father(node);
@@ -511,7 +511,9 @@ void BDS(){//表达式
 	curnode=new ptree(node,"TERM");//创建一个非终结符节点,
 	link2father(node);
 	TERM();//fnode
-	if(neg){//负项  对fnode取负给node 
+	bool isleaf=false;
+	if(fnode->wnode)	isleaf=true;//term  指向一个叶子 
+	if(neg){//负项  对fnode取负给node     !!!!!!!!这里还需要再思考一下，把bds指向叶子后，这个负项怎么做 
 		fnode->value=fnode->value*(-1); 
 		assembly[nextquad++]=
 		new quat(optab["minus"],fnode,NULL,node);
@@ -519,6 +521,7 @@ void BDS(){//表达式
 		node->value=fnode->value;//当前节点的值	
 	}
 	while(kw[cur->k]=="+"| kw[cur->k]=="-"){
+		isleaf=false; 
 		curnode=new ptree(node,"PS");//创建一个非终结符节点,
 		link2father(node);
 		PS();
@@ -531,6 +534,8 @@ void BDS(){//表达式
 		assembly[nextquad++]=
 		new quat(optab[kw[psnode->firstchild->wnode->k]],node,fnode,node);
 	}
+	if(isleaf)	//这一个表达式实际上只是一个叶子，则不进入上面的while 
+		node->wnode=fnode->wnode; 
 	//规约 
 	fnode=node;
 } 
@@ -540,8 +545,13 @@ void TERM(){//项
 	curnode=new ptree(node,"FAC");//创建一个非终结符节点,
 	link2father(node);
 	FAC();
-	node->value=fnode->value;//当前节点的值	
+	ptree *n1=fnode;
+	bool isleaf=false;
+	if(n1->wnode)	isleaf=true;//这个fac是个叶子 
+	node->value=n1->value;//当前节点的值
+	bool isonetime=true;//判断这里是否为一个还是多个乘除符号	
 	while(kw[cur->k]=="*"| kw[cur->k]=="/"){
+		isleaf=false;
 		curnode=new ptree(node,"MULD");//创建一个非终结符节点,
 		link2father(node);
 		MULD();
@@ -549,9 +559,15 @@ void TERM(){//项
 		curnode=new ptree(node,"FAC");//创建一个非终结符节点,
 		link2father(node);
 		FAC(); 
+		if(isonetime){
+			assembly[nextquad++]=
+		new quat(optab[kw[muldnode->firstchild->wnode->k]],n1,fnode,node);
+		} else
 		assembly[nextquad++]=
 		new quat(optab[kw[muldnode->firstchild->wnode->k]],node,fnode,node);
 	} 
+	if(isleaf)	//这一项实际上只是一个叶子，则不进入上面的while 
+		node->wnode=n1->wnode; 
 	//规约 
 	
 	fnode=node;
@@ -562,6 +578,8 @@ void FAC(){//因子
 	if(kw[cur->k]=="identifier"){
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
+//		cout<<"test  :"<<node->nodeseq<<endl;
+		node->wnode=cur;		//因为是个叶子，所以让这个fac也指向叶子 
 		//去table中取数据的值 
 //首先查找标识符是否存在 到table表中查找 
 		tableitem* id= findintab(tabptr.top(),cur->v);
@@ -571,6 +589,7 @@ void FAC(){//因子
 	}else if(kw[cur->k]=="constant"){
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
+		node->wnode=cur;		//因为是个叶子，所以让这个fac也指向叶子 
 //首先查找标识符是否存在 到table表中查找 
 		node->value=num[strtoi(cur->v)]; 
 		cur=cur->next;
@@ -584,6 +603,9 @@ void FAC(){//因子
 			link2father(node);
 			cur=cur->next;
 		}
+		if(fnode->wnode){//如果bds指向一个叶子
+			node->wnode=fnode->wnode; 
+		}	
 		else parserror();
 	}else parserror();
 	//规约 
