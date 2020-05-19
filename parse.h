@@ -149,7 +149,7 @@ void P(){//主程序
 	table=new symtab("main",lev);//创建主table表 
 	tabptr.push(table); //存放table的层次 
 	offset.push(3); 
-	
+//	cout<<"test!!   \n"; 
 	cur=head; 				//单词序列迭代器初始化 
 	
 	curnode=new ptree(root,"SP");
@@ -510,18 +510,22 @@ void BDS(){//表达式
 	}	
 	curnode=new ptree(node,"TERM");//创建一个非终结符节点,
 	link2father(node);
-	TERM();//fnode
-	bool isleaf=false;
-	if(fnode->wnode)	isleaf=true;//term  指向一个叶子 
-	if(neg){//负项  对fnode取负给node     !!!!!!!!这里还需要再思考一下，把bds指向叶子后，这个负项怎么做 
-		fnode->value=fnode->value*(-1); 
+	TERM(); 
+	ptree *n1=fnode;
+	bool isleaf=true;//标明这个表达式是否直接指向一个TERM 
+	if(neg){//负项  对fnode即n1取负给node     !!!!!!!!这里还需要再思考一下，把bds指向叶子后，这个负项怎么做 
+	//	node->value=n1->value*(-1);
+		if(n1->wnode){//n1是一个叶子
+		 
+		}
 		assembly[nextquad++]=
-		new quat(optab["minus"],fnode,NULL,node);
+		new quat(optab["minus"],n1,NULL,n1);
 	} else{
-		node->value=fnode->value;//当前节点的值	
+		node->value=n1->value;//当前节点的值	
 	}
+	bool isonetime=true;//判断这里是否为一个还是多个加减符号
 	while(kw[cur->k]=="+"| kw[cur->k]=="-"){
-		isleaf=false; 
+		isleaf=false;  //bds节点不是只有一个孩子 
 		curnode=new ptree(node,"PS");//创建一个非终结符节点,
 		link2father(node);
 		PS();
@@ -531,13 +535,22 @@ void BDS(){//表达式
 		TERM();
 	//	cout<<psnode->firstchild->wnode->sn<<"..";
 	//	cout<<"test+-  :"<<kw[psnode->firstchild->wnode->k]<<" \n";
-		assembly[nextquad++]=
-		new quat(optab[kw[psnode->firstchild->wnode->k]],node,fnode,node);
-	}
-	if(isleaf)	//这一个表达式实际上只是一个叶子，则不进入上面的while 
-		node->wnode=fnode->wnode; 
+		if(isonetime){
+			isonetime=false;
+			assembly[nextquad++]=
+			new quat(optab[kw[psnode->firstchild->wnode->k]],n1,fnode,node);
+		} else{
+			assembly[nextquad++]=
+			new quat(optab[kw[psnode->firstchild->wnode->k]],node,fnode,node);
+			}	
+		}
+	if(isleaf){	//这一个表达式实际上只是一个叶子，则不进入上面的while 
+//即个bds只含有乘除，无加减，则bds节点 和term 节点实际上开辟同一个空间
+//所以这里fnode 就不指向自己，而指向其孩子term 
+		node->wnode=n1->wnode; 
+		fnode=n1; 
+	}else  fnode=node;
 	//规约 
-	fnode=node;
 } 
 
 void TERM(){//项 
@@ -560,6 +573,7 @@ void TERM(){//项
 		link2father(node);
 		FAC(); 
 		if(isonetime){
+			isonetime=false;
 			assembly[nextquad++]=
 		new quat(optab[kw[muldnode->firstchild->wnode->k]],n1,fnode,node);
 		} else
@@ -569,7 +583,6 @@ void TERM(){//项
 	if(isleaf)	//这一项实际上只是一个叶子，则不进入上面的while 
 		node->wnode=n1->wnode; 
 	//规约 
-	
 	fnode=node;
 } 
 
@@ -578,7 +591,7 @@ void FAC(){//因子
 	if(kw[cur->k]=="identifier"){
 		curnode=new ptree(cur,node);//创建一个叶子节点,
 		link2father(node);
-//		cout<<"test  :"<<node->nodeseq<<endl;
+	//	cout<<"test  :"<<node->nodeseq<<endl;
 		node->wnode=cur;		//因为是个叶子，所以让这个fac也指向叶子 
 		//去table中取数据的值 
 //首先查找标识符是否存在 到table表中查找 
