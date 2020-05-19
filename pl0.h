@@ -60,6 +60,16 @@ int num[maxnum],ci;
 void semanticserror();
 void parserror();
 class ptree;
+
+//string数据转换为int型
+int strtoi(string x){
+	if(x=="")	return -1;
+	int s=0,l=x.length();
+	for(int i=0;i<l;i++)
+		s=s*10+x[i]-'0';
+	return s;
+} 
+
 //要创建一个table表，存储源程序中出现的标识符
 // 包括，常量名，变量名，过程名
 //table的格式，name; kind; val(常量);level;ADR(变量);
@@ -312,24 +322,31 @@ void showass(){
 			cout.width(18),cout<<i;
 			cout.width(5),cout<<opcode[assembly[i]->op];
 			cout.width(16),cout<<assembly[i]->op;
+//操作数1			
 			if(assembly[i]->r1)	{
 				//判断操作数节点，！！--实际上--！！是否是叶子   //这里不可以，因为叶子都规约上去变成非叶子了 
 				cout.width(10); 
 				if(assembly[i]->r1->wnode){//叶子节点 
-					cout<<assembly[i]->r1->wnode->v; 
+					if(assembly[i]->r1->wnode->k==constant){
+						cout<<num[strtoi(assembly[i]->r1->wnode->v)];
+					}else 	cout<<assembly[i]->r1->wnode->v; 
 				}else{ //非叶子  ，临时地址空间 
 					cout<<assembly[i]->r1->nodeseq;//value ; 
 				} 
 			} else cout.width(10),cout<<"-";//没有该操作数 
+//操作数2 
 			if(assembly[i]->r2){////判断操作数节点是否是叶子 同上	
 				cout.width(10); 
 				if(assembly[i]->r2->wnode){//叶子节点 
-					cout<<assembly[i]->r2->wnode->v; 
+					if(assembly[i]->r2->wnode->k==constant){
+						cout<<num[strtoi(assembly[i]->r2->wnode->v)];
+					}else 	cout<<assembly[i]->r2->wnode->v;  
 				}else{ //非叶子  ，临时地址空间 
 					cout<<assembly[i]->r2->nodeseq;//value ; 
 				} 
 			}else cout.width(10),cout<<"-";//没有该操作数 
 			//
+//操作数3 
 			if(assembly[i]->op<jnum){	//说明这是一个跳转指令，则目的操作数为一个数字，即n3 
 				cout.width(10);
 				if(assembly[i]->n3==-1)	cout<<"-";	 else cout<<assembly[i]->n3;
@@ -339,24 +356,20 @@ void showass(){
 			//	else 
 				if(opcode[assembly[i]->op]==":=")	//赋值语句，操作数是一个变量,节点是一个叶子节点 
 					cout.width(10),cout<<assembly[i]->r3->wnode->v; 
-				else {//其他语句， 目的操作数应该是一个临时地址空间， 
-					cout.width(10),cout<<"-";
-					cout<<assembly[i]->r3->nodeseq;
+				else if(opcode[assembly[i]->op]=="minus"){
+					cout.width(10);
+					if(assembly[i]->r3->wnode)
+						cout<<assembly[i]->r3->wnode->v;
+					else cout<<"-"<<assembly[i]->r3->nodeseq;
+				}else{//其他语句， 目的操作数应该是一个临时地址空间， 
+					cout.width(10),
+					cout<<"-"<<assembly[i]->r3->nodeseq;
 				} 
 			}
 			cout<<endl;
 		}else break;
 	}
 }
-
-//string数据转换为int型
-int strtoi(string x){
-	if(x=="")	return -1;
-	int s=0,l=x.length();
-	for(int i=0;i<l;i++)
-		s=s*10+x[i]-'0';
-	return s;
-} 
 
 // 创建保留字表reserve(该表同样兼具单词编码表)，
 //还有编码对应单词表kw 
