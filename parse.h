@@ -515,9 +515,6 @@ void BDS(){//表达式
 	bool isleaf=true;//标明这个表达式是否直接指向一个TERM 
 	if(neg){//负项  对fnode即n1取负给node     !!!!!!!!这里还需要再思考一下，把bds指向叶子后，这个负项怎么做 
 	//	node->value=n1->value*(-1);
-		if(n1->wnode){//n1是一个叶子
-		 
-		}
 		assembly[nextquad++]=
 		new quat(optab["minus"],n1,NULL,n1);
 	} else{
