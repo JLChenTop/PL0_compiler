@@ -17,7 +17,7 @@ int main()
 //词法分析程序，产生单词序列链表，head 
 	lexer(t); 
 	//输出单词序列链表head 
-	show(head);
+//	show(head);
 //语法分析，递归子程序法 
 	P(); 
 //后序遍历语法树：
